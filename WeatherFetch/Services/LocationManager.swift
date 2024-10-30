@@ -14,6 +14,10 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     @Published var currentLocation: CLLocationCoordinate2D?
     @Published var locationDenied: Bool = false
     
+    // Create subjects for location updates and permission status
+    var locationPublisher = PassthroughSubject<CLLocationCoordinate2D?, Never>()
+    var permissionStatusPublisher = PassthroughSubject<Bool, Never>()
+    
     override init() {
         super.init()
         self.locationManager = CLLocationManager()
@@ -32,6 +36,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first?.coordinate {
             self.currentLocation = location
+            locationPublisher.send(location)  // Send location update
         }
     }
     
@@ -42,9 +47,10 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         if status == .denied {
             locationDenied = true
+            permissionStatusPublisher.send(false) // Notify permission denied
         } else if status == .authorizedWhenInUse {
             startUpdatingLocation()
-            // Notify that location permission is granted
+            permissionStatusPublisher.send(true) // Notify permission granted
         }
     }
 }

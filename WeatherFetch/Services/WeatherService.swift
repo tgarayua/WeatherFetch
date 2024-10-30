@@ -8,7 +8,7 @@
 import Foundation
 import CoreLocation
 
-class WeatherService {
+class WeatherService: WeatherServiceProtocol {
     let apiKey = "36fb93636d7b3adc0b9881e208eb6f8c"
     let baseURL = "https://api.openweathermap.org/data/2.5/weather"
 

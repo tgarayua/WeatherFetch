@@ -51,7 +51,6 @@ class WeatherViewController: UIViewController {
         view.addSubview(searchButton)
         view.addSubview(weatherInfoLabel)
 
-        // Layout constraints
         setupConstraints()
     }
 
@@ -99,5 +98,10 @@ class WeatherViewController: UIViewController {
         coordinator.animate(alongsideTransition: { [weak self] _ in
             self?.setupConstraints() // Reapply constraints to update layout
         }, completion: nil)
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        // Handle any additional updates when size class changes
     }
 }

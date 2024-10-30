@@ -13,7 +13,7 @@ class WeatherViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var searchText: String = "" // Add a property for search text
 
-    private var weatherService: WeatherService
+    private var weatherService: WeatherServiceProtocol
     private var locationManager: LocationManager
     private var cancellables = Set<AnyCancellable>()
 
@@ -90,7 +90,7 @@ class WeatherViewModel: ObservableObject {
         }
     }
 
-    private func loadLastSearchedCity() {
+    func loadLastSearchedCity() {
         if let lastSearchedCity = UserDefaults.standard.string(forKey: "lastSearchedCity") {
             fetchWeather(for: lastSearchedCity) // Fetch weather for the last searched city
             searchText = lastSearchedCity // Update the search text
