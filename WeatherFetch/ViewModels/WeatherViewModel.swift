@@ -5,70 +5,99 @@
 //  Created by Thomas Garayua on 10/29/24.
 //
 
-import Foundation
 import Combine
 import CoreLocation
 
 class WeatherViewModel: ObservableObject {
     @Published var weatherResponse: WeatherResponse?
     @Published var errorMessage: String?
-    
+    @Published var searchText: String = "" // Add a property for search text
+
     private var weatherService: WeatherService
-    private var locationManager = LocationManager()
+    private var locationManager: LocationManager
     private var cancellables = Set<AnyCancellable>()
-    
-    init(weatherService: WeatherService) {
+
+    init(weatherService: WeatherService, locationManager: LocationManager) {
         self.weatherService = weatherService
-        
-        // Listen for location updates
-        locationManager.$location
-            .compactMap { $0 } // Only pass non-nil locations
+        self.locationManager = locationManager
+
+        // Observe the currentLocation property
+        locationManager.$currentLocation
             .sink { [weak self] location in
-                self?.fetchWeather(for: location) // Pass CLLocationCoordinate2D
+                // Fetch weather for current location if the user has granted permission
+                if let location = location {
+                    self?.fetchWeather(for: location)
+                }
             }
             .store(in: &cancellables)
-        
-        // Auto-load last searched city if available
-        if let lastCity = UserDefaults.standard.string(forKey: "lastCity") {
-            fetchWeather(for: lastCity)
+
+        // Observe locationDenied to handle when access is denied
+        locationManager.$locationDenied
+            .sink { [weak self] denied in
+                if denied {
+                    self?.loadLastSearchedCity() // Load last searched city if location access is denied
+                }
+            }
+            .store(in: &cancellables)
+
+        // Always load last searched city on app launch
+        loadLastSearchedCity()
+
+        // Request permission for location access (only if not previously granted)
+        if isFirstLaunch() {
+            locationManager.requestLocationPermission()
         }
     }
-    
-    // New method to fetch weather using coordinates
+
+    private func isFirstLaunch() -> Bool {
+        // Check UserDefaults to determine if the app is being launched for the first time
+        return !UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+    }
+
+    func fetchWeather(for city: String) {
+        // Save the city to UserDefaults
+        UserDefaults.standard.set(city, forKey: "lastSearchedCity")
+        searchText = city // Set the search text to the city name
+
+        weatherService.fetchWeather(for: city) { [weak self] result in
+            switch result {
+            case .success(let response):
+                DispatchQueue.main.async {
+                    self?.weatherResponse = response
+                    self?.errorMessage = nil
+                }
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    self?.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+
     func fetchWeather(for location: CLLocationCoordinate2D) {
         weatherService.fetchWeather(for: location) { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let response):
-                    print("Weather fetched for coordinates: \(location): \(response)") // Debugging
+            switch result {
+            case .success(let response):
+                DispatchQueue.main.async {
                     self?.weatherResponse = response
                     self?.errorMessage = nil
-                case .failure(let error):
-                    print("Failed to fetch weather for coordinates: \(error.localizedDescription)")
+                }
+            case .failure(let error):
+                DispatchQueue.main.async {
                     self?.errorMessage = error.localizedDescription
-                    self?.weatherResponse = nil
                 }
             }
         }
     }
 
-    // Existing method for fetching weather by city name
-    func fetchWeather(for city: String) {
-        weatherService.fetchWeather(for: city) { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let response):
-                    print("Weather fetched for \(city): \(response)") // Debugging
-                    self?.weatherResponse = response
-                    UserDefaults.standard.set(city, forKey: "lastCity")
-                    self?.errorMessage = nil
-                case .failure(let error):
-                    print("Failed to fetch weather for \(city): \(error.localizedDescription)")
-                    self?.errorMessage = error.localizedDescription
-                    self?.weatherResponse = nil
-                }
-            }
+    private func loadLastSearchedCity() {
+        if let lastSearchedCity = UserDefaults.standard.string(forKey: "lastSearchedCity") {
+            fetchWeather(for: lastSearchedCity) // Fetch weather for the last searched city
+            searchText = lastSearchedCity // Update the search text
         }
+    }
+
+    func setHasLaunched() {
+        UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
     }
 }
-

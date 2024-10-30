@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct WeatherFetchApp: App {
-    @StateObject private var viewModel = WeatherViewModel(weatherService: WeatherService())
+    @StateObject private var viewModel = WeatherViewModel(weatherService: WeatherService(), locationManager: LocationManager())
 
     var body: some Scene {
         WindowGroup {

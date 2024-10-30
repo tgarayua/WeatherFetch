@@ -13,7 +13,7 @@ class WeatherCoordinator {
 
     init(navigationController: UINavigationController, weatherService: WeatherService) {
         self.navigationController = navigationController
-        self.weatherViewModel = WeatherViewModel(weatherService: weatherService)
+        self.weatherViewModel = WeatherViewModel(weatherService: WeatherService(), locationManager: LocationManager())
     }
     
     func start() {
