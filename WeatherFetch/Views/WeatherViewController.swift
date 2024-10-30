@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import SwiftUI
 import Combine
 
 class WeatherViewController: UIViewController {
@@ -14,8 +13,6 @@ class WeatherViewController: UIViewController {
     private var cityTextField: UITextField!
     private var searchButton: UIButton!
     private var weatherInfoLabel: UILabel!
-
-    // Add this property
     private var cancellables: Set<AnyCancellable> = []
 
     init(viewModel: WeatherViewModel) {
@@ -55,16 +52,22 @@ class WeatherViewController: UIViewController {
         view.addSubview(weatherInfoLabel)
 
         // Layout constraints
+        setupConstraints()
+    }
+
+    private func setupConstraints() {
         NSLayoutConstraint.activate([
             cityTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             cityTextField.topAnchor.constraint(equalTo: view.topAnchor, constant: 100),
-            cityTextField.widthAnchor.constraint(equalToConstant: 200),
-            
+            cityTextField.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
+
             searchButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             searchButton.topAnchor.constraint(equalTo: cityTextField.bottomAnchor, constant: 20),
-            
+
             weatherInfoLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            weatherInfoLabel.topAnchor.constraint(equalTo: searchButton.bottomAnchor, constant: 20)
+            weatherInfoLabel.topAnchor.constraint(equalTo: searchButton.bottomAnchor, constant: 20),
+            weatherInfoLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            weatherInfoLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
         ])
     }
 
@@ -80,7 +83,7 @@ class WeatherViewController: UIViewController {
                     self?.weatherInfoLabel.text = "Weather in \(response.name): \(response.main.temp)°C"
                 }
             }
-            .store(in: &cancellables) // Store the cancellable
+            .store(in: &cancellables)
 
         viewModel.$errorMessage
             .sink { [weak self] error in
@@ -88,6 +91,13 @@ class WeatherViewController: UIViewController {
                     self?.weatherInfoLabel.text = "Error: \(error)"
                 }
             }
-            .store(in: &cancellables) // Store the cancellable
+            .store(in: &cancellables)
+    }
+
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        coordinator.animate(alongsideTransition: { [weak self] _ in
+            self?.setupConstraints() // Reapply constraints to update layout
+        }, completion: nil)
     }
 }
