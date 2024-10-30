@@ -19,7 +19,7 @@ class WeatherViewModelTests: XCTestCase {
         super.setUp()
         mockWeatherService = MockWeatherService()
         mockLocationManager = MockLocationManager()
-        viewModel = WeatherViewModel(weatherService: mockWeatherService, locationManager: mockLocationManager)
+        viewModel = WeatherViewModel(weatherService: <#WeatherService#>, locationManager: mockLocationManager)
         cancellables = []
     }
 
