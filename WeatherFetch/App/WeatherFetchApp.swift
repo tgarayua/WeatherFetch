@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct WeatherFetchApp: App {
+    @StateObject private var viewModel = WeatherViewModel(weatherService: WeatherService())
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            WeatherView()
+                .environmentObject(viewModel) // Inject the view model into the environment
         }
     }
 }
